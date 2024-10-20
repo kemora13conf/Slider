@@ -1,0 +1,68 @@
+.Slider{
+    max-width: 100%;
+    min-height: 300px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+    /* remove select */
+    user-select: none;
+
+}
+.Slider .slides-container{
+    display: flex;
+    justify-items: center;
+    align-items: center;
+    width: 100%;
+    height: 600px;
+    overflow: hidden;
+    overflow-x: scroll;
+    pointer-events: none;
+    scroll-behavior: smooth;
+    position: absolute;
+    z-index: 1;
+}
+
+/* hide scrollbar */
+.Slider .slides-container::-webkit-scrollbar {
+    display: none;
+}
+.Slider .slides {
+    display: flex;
+    justify-items: center;
+    align-items: center;
+    width: fit-content;
+    pointer-events: auto;
+}
+.Slider .slide {
+    width: fit-content;
+    height: fit-content;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.prev-button-section {
+    height: 100%;
+    position: absolute;
+    z-index: 2;
+    left: 0;
+    min-width: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    padding: 5px
+}
+.next-button-section {
+    height: 100%;
+    position: absolute;
+    z-index: 2;
+    right: 0;
+    min-width: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    padding: 5px
+}
