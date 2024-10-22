@@ -39,6 +39,7 @@ interface SliderProps {
   nextButton: ReactNode;
   prevButton: ReactNode;
   pas: number;
+  isThereNewData: boolean;
 }
 
 export const Slider: React.FC<SliderProps> = ({
@@ -46,8 +47,10 @@ export const Slider: React.FC<SliderProps> = ({
   nextButton,
   prevButton,
   pas,
+  isThereNewData,
 }) => {
   const [currentItem, setCurrentItem] = useState(0);
+  const [oldCurrentItem, setOldCurrentItem] = useState(0);
   const [showPrev, setShowPrev] = useState(false);
   const [originalItems, setOriginalItems] = useState<ReactNode[]>([]);
   const [items, setItems] = useState<ReactNode[]>([]);
@@ -58,20 +61,12 @@ export const Slider: React.FC<SliderProps> = ({
   const sliderRef = useRef<HTMLDivElement>(null);
   const itemsRefs = useRef<(HTMLDivElement | null)[]>([]);
   const sliderContainerRef = useRef<HTMLDivElement>(null);
-  const [itemsChanged, setItemsChanged] = useState(true);
+  const [itemChanged, setItemsChanged] = useState(true);
 
   const containerWidth = useMotionValue(0);
 
   const next = useCallback(() => {
     setCurrentItem((prev) => {
-      if (!itemsChanged) {
-        setItems((prev) => {
-          const threeFromStart = prev.slice(0, pas + 1);
-          const rest = prev.slice(pas + 1);
-          console.log("rest", rest);
-          return [...rest, ...threeFromStart].filter(Boolean);
-        });
-      }
       const nextItem = prev + pas;
       setShowPrev(true);
       return nextItem;
@@ -90,37 +85,26 @@ export const Slider: React.FC<SliderProps> = ({
   const prev = useCallback(() => {
     setCurrentItem((prev) => {
       const prevItem = Math.max(0, prev - pas);
-      setItems((prev) => {
-        const threeFromEnd = prev.slice(-pas - 1);
-        const rest = prev.slice(0, -pas - 1);
-        if (sliderContainerRef.current) {
-          const lastScrollX = sliderContainerRef.current.scrollLeft;
-          if (itemsRefs.current[0]) {
-            // The issue on scroll back is in here the "+" sign should be "-" but I can't figure out why
+      if (sliderContainerRef.current) {
+        const lastScrollX = sliderContainerRef.current.scrollLeft;
+        if (itemsRefs.current[0]) {
+          sliderContainerRef.current &&
             sliderContainerRef.current.scrollTo({
-              left: lastScrollX - pas * itemsRefs.current[0].clientWidth,
+              left: lastScrollX + ( -pas - 1) * itemsRefs.current[0].clientWidth,
               behavior: "smooth",
             });
-          }
         }
-        return [...threeFromEnd, ...rest].filter(Boolean);
-      });
+      }
       return prevItem;
     });
-    if (sliderContainerRef.current) {
-      const lastScrollX = sliderContainerRef.current.scrollLeft;
-      if (itemsRefs.current[0]) {
-        sliderContainerRef.current.scrollTo({
-          left: lastScrollX - pas * itemsRefs.current[0].clientWidth,
-          behavior: "smooth",
-        });
-      }
-    }
   }, [pas]);
 
   useEffect(() => {
-    setOriginalItems(children);
+    if (isThereNewData) {
+      setOriginalItems(children);
+    }
   }, [children]);
+
   useEffect(() => {
     // if items changed, update itemChange state
     if (originalItems.length !== items.length) {
@@ -130,6 +114,43 @@ export const Slider: React.FC<SliderProps> = ({
     }
     setItems(originalItems);
   }, [originalItems]);
+
+  useEffect(() => {
+    console.log("currentItem", currentItem, "oldCurrentItem", oldCurrentItem);
+    if (currentItem - pas * 3 < 0) {
+      // we need to take pas * item from the end of the list and add it to the beginning
+      // also we need to update currentItem and with that the scroll position of the slider
+      setItems([...items, ...items]);
+      setCurrentItem((prev) => {
+        return prev + pas * 3;
+      });
+      // update the value of the scroll y of sliderContainerRef.current not the scrollTo
+      setTimeout(() => {
+        if (sliderContainerRef.current) {
+          if (itemsRefs.current[0]) {
+            sliderContainerRef.current.scrollTo({
+              left: itemsRefs.current[0].clientWidth * pas * 3 + 1,
+              behavior: "auto",
+            });
+          }
+        }
+      }, 150);
+    }
+
+    if (currentItem + pas * 2 >= items.length) {
+      if (!itemChanged) {
+        const newItems = [...items];
+        const itemsToAdd = [];
+        for (let i = 0; i < pas * 3; i++) {
+          itemsToAdd.push(newItems[i]);
+        }
+        newItems.push(...items, ...itemsToAdd);
+        setItems(newItems);
+      }
+    }
+
+    setOldCurrentItem(currentItem);
+  }, [currentItem, sliderContainerRef.current, items.length, itemChanged]);
 
   useEffect(() => {
     if (sliderContainerRef.current) {
@@ -188,23 +209,24 @@ export const Slider: React.FC<SliderProps> = ({
             <motion.div
               ref={refToItemsInView}
               className="slides"
-              drag="x"
-              dragConstraints={{ left: 0, right: 0 }}
-              dragElastic={1}
-              onDragEnd={handleDragEnd}
+              // drag="x"
+              // dragConstraints={{ left: 0, right: 0 }}
+              // dragElastic={1}
+              // onDragEnd={handleDragEnd}
               style={{
                 x: useMotionValue(
                   -currentItem * (itemsRefs.current[0]?.clientWidth || 0)
                 ),
               }}
             >
-              {React.Children.map(items, (child, index) => (
+              {items.map((item, index) => (
                 <motion.div
                   ref={(element) => (itemsRefs.current[index] = element)}
                   key={index}
                   className="slide"
+                  id={`slide-${index}`}
                 >
-                  {child}
+                  {item}
                 </motion.div>
               ))}
             </motion.div>

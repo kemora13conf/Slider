@@ -18,7 +18,7 @@
     overflow: hidden;
     overflow-x: scroll;
     pointer-events: none;
-    scroll-behavior: smooth;
+    /* scroll-behavior: smooth; */
     position: absolute;
     z-index: 1;
 }
@@ -29,6 +29,8 @@
 }
 .Slider .slides {
     display: flex;
+    width: fit-content;
+    height: fit-content;
     justify-items: center;
     align-items: center;
     width: fit-content;

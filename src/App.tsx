@@ -41,6 +41,7 @@ const App: React.FC = () => {
       nextButton={<NextButton onClick={handleNext} />}
       prevButton={<PrevButton />}
       pas={3}
+      isThereNewData={!elementsDone}
     >
       {items.map((item, index) => (
         <Card key={index} item={item} />
